@@ -1,0 +1,246 @@
+{
+  "intents": [
+    {
+      "tag": "greeting",
+      "patterns": ["hi", "hello", "hey", "namaste", "ram ram", "greetings", "good morning", "good afternoon", "start", "wake up"],
+      "responses": [
+        "Namaste! I am your Kisan Assistant. Ask me about Crops, Mandi Prices, or Schemes.",
+        "Ram Ram! How can I help you with your farming today?",
+        "Hello! I can help you with seeds, fertilizers, weather, and market rates."
+      ]
+    },
+    {
+      "tag": "goodbye",
+      "patterns": ["bye", "goodbye", "see you", "exit", "quit", "end", "tata", "close"],
+      "responses": [
+        "Goodbye! Happy Farming.",
+        "See you soon. May your harvest be plentiful!",
+        "Bye! Check the app later for updated Mandi prices."
+      ]
+    },
+    {
+      "tag": "creator",
+      "patterns": ["who made you", "who created you", "developer", "owner", "who is your boss"],
+      "responses": [
+        "I was created by the KrishiMitra Team as a Final Year MSc Project.",
+        "I am an AI built to help Indian farmers, developed by a student developer."
+      ]
+    },
+    {
+      "tag": "weather",
+      "patterns": ["weather", "rain", "monsoon", "will it rain", "temperature", "forecast", "climate", "storm", "humidity", "weather today"],
+      "responses": [
+        "You can check the live weather widget on your Dashboard for accurate local details.",
+        "It looks sunny today, good for harvesting. Check the dashboard for a 7-day forecast.",
+        "Monsoon predictions are updated on the home screen. Please verify there."
+      ]
+    },
+    {
+      "tag": "tractor",
+      "patterns": ["tractor price", "buy tractor", "tractor loan", "mahindra tractor", "swaraj tractor", "john deere", "sonalika", "tractor subsidy", "mini tractor", "second hand tractor"],
+      "responses": [
+        "Tractor prices start from ₹3.5 Lakh (Mini) to ₹12 Lakh (Heavy Duty). Popular brands are Mahindra, Swaraj, and Sonalika.",
+        "You can rent or buy second-hand tractors in our 'Equipment Hub'. Check the menu!",
+        "Government provides up to 30% subsidy on new tractors under the SMAM scheme."
+      ]
+    },
+    {
+      "tag": "machinery",
+      "patterns": ["rotavator", "cultivator", "harvester", "thresher", "sprayer", "drone", "seeder", "plough", "farm equipment", "machinery price"],
+      "responses": [
+        "Rotavators cost between ₹80,000 to ₹1.2 Lakh. Subsidies are available.",
+        "Combine Harvesters are expensive (₹20 Lakh+). It is better to rent one from our Equipment Hub.",
+        "Drone spraying is the new technology. It costs about ₹500 per acre for service."
+      ]
+    },
+    {
+      "tag": "wheat",
+      "patterns": ["wheat", "gehu", "wheat price", "sow wheat", "wheat variety", "wheat fertilizer", "wheat water", "wheat season", "best wheat", "wheat disease"],
+      "responses": [
+        "Wheat is a Rabi crop sown in Nov-Dec. Best varieties include HD-2967 and DBW-187.",
+        "Wheat needs 4-6 irrigations. Critical stage is CRI (21 days after sowing).",
+        "Current Wheat MSP is around ₹2125 per quintal. Market rates may vary."
+      ]
+    },
+    {
+      "tag": "rice",
+      "patterns": ["rice", "paddy", "dhan", "basmati", "rice price", "rice variety", "paddy disease", "blast disease", "rice season", "kharif crop"],
+      "responses": [
+        "Rice (Paddy) is a Kharif crop. It needs standing water for the first 40 days.",
+        "Basmati 1121 and 1509 are high-value export varieties fetching ₹3500+ per quintal.",
+        "Common diseases: Blast and Stem Borer. Use Tricyclazole for Blast control."
+      ]
+    },
+    {
+      "tag": "cotton",
+      "patterns": ["cotton", "kapas", "bt cotton", "cotton price", "bollworm", "pink bollworm", "white fly", "cotton fertilizer", "cotton sowing"],
+      "responses": [
+        "Cotton is a cash crop. BT Cotton protects against American Bollworm but watch out for Pink Bollworm.",
+        "Sowing time: May-June. Harvest: Oct-Nov. Avoid waterlogging in the field.",
+        "For Pink Bollworm, use pheromone traps and spray Emamectin Benzoate if severe."
+      ]
+    },
+    {
+      "tag": "sugarcane",
+      "patterns": ["sugarcane", "ganna", "sugar price", "cane", "red rot", "sugarcane variety", "sugarcane planting", "co 0238"],
+      "responses": [
+        "Sugarcane is a long-duration crop (10-12 months). CO-0238 is the most popular high-yield variety.",
+        "Red Rot is a major threat. Treat seed sets with Carbendazim before planting.",
+        "FRP (Fair Remunerative Price) for sugarcane is fixed by the govt, approx ₹305/quintal."
+      ]
+    },
+    {
+      "tag": "maize",
+      "patterns": ["maize", "corn", "bhutta", "makka", "fall armyworm", "maize price", "baby corn", "sweet corn", "maize season"],
+      "responses": [
+        "Maize can be grown in all three seasons (Kharif, Rabi, Zaid). It is sensitive to waterlogging.",
+        "Fall Armyworm is the biggest enemy of Maize. Check whorls and spray Coragen if needed.",
+        "Market rate for Maize is approx ₹2000-₹2400 per quintal."
+      ]
+    },
+    {
+      "tag": "potato",
+      "patterns": ["potato", "aloo", "potato price", "potato blight", "early blight", "late blight", "potato sowing", "cold storage"],
+      "responses": [
+        "Potato is sown in Oct-Nov. It needs loose, sandy loam soil for good tuber growth.",
+        "Late Blight is dangerous. Spray Mancozeb as a preventive measure during cloudy weather.",
+        "Store potatoes in cold storage to sell later at higher prices (₹10-15/kg vs ₹5/kg at harvest)."
+      ]
+    },
+    {
+      "tag": "tomato",
+      "patterns": ["tomato", "tamatar", "tomato price", "tomato disease", "leaf curl", "wilt", "tomato variety", "hybrid tomato"],
+      "responses": [
+        "Tomatoes are highly profitable but risky due to price fluctuation (₹5 to ₹100/kg).",
+        "Leaf Curl Virus is spread by Whiteflies. Use sticky traps and remove infected plants immediately.",
+        "Staking (giving support) increases tomato yield by 30%."
+      ]
+    },
+    {
+      "tag": "onion",
+      "patterns": ["onion", "pyaz", "kanda", "onion price", "onion storage", "nasik onion", "kharif onion", "rabi onion"],
+      "responses": [
+        "Onion prices are volatile. Rabi onion (harvested April) has the best storage life.",
+        "Stop irrigation 10-15 days before harvesting to prevent rotting in storage.",
+        "Major market: Lasalgaon (Nashik) sets the onion trend for India."
+      ]
+    },
+    {
+      "tag": "soybean",
+      "patterns": ["soybean", "soya", "soyabean", "soybean price", "yellow mosaic", "oilseed", "mp soybean"],
+      "responses": [
+        "Soybean is a major Kharif oilseed. Sowing: June-July.",
+        "Yellow Mosaic Virus is a common issue. Control whiteflies to prevent it.",
+        "MSP for Soybean is around ₹4600 per quintal."
+      ]
+    },
+    {
+      "tag": "mustard",
+      "patterns": ["mustard", "sarso", "rai", "oilseed", "mustard price", "mustard sawfly", "mustard variety"],
+      "responses": [
+        "Mustard is a low-water Rabi crop. Excellent for dry areas.",
+        "Sow in Oct. Harvest in Feb-March. Pusa Bold is a good variety.",
+        "Aphids (Chepa) attack mustard in Jan. Spray Imidacloprid if needed."
+      ]
+    },
+    {
+      "tag": "pm_kisan",
+      "patterns": ["pm kisan", "6000 rupees", "kisan samman nidhi", "government money", "pm kisan status", "next installment", "kyc"],
+      "responses": [
+        "Under PM Kisan Samman Nidhi, farmers get ₹6000 per year in 3 installments of ₹2000.",
+        "Check your status at pmkisan.gov.in. e-KYC is mandatory now.",
+        "The next installment usually comes in April, August, and December."
+      ]
+    },
+    {
+      "tag": "kcc",
+      "patterns": ["kcc", "kisan credit card", "loan", "bank loan", "interest rate", "farm loan", "sbi kcc"],
+      "responses": [
+        "Kisan Credit Card (KCC) offers loans at a cheap 4% interest rate (if repaid timely).",
+        "You can apply for KCC at any nationalized bank (SBI, PNB, BOB) with your land documents.",
+        "Limit depends on your land size and crop scale of finance."
+      ]
+    },
+    {
+      "tag": "insurance",
+      "patterns": ["insurance", "fasal bima", "pmfby", "crop loss", "compensation", "claim insurance"],
+      "responses": [
+        "PM Fasal Bima Yojana (PMFBY) covers crop loss due to rain, drought, or pests.",
+        "Premium is very low: 2% for Kharif and 1.5% for Rabi crops.",
+        "Report crop loss to the insurance company or bank within 72 hours."
+      ]
+    },
+    {
+      "tag": "soil_health",
+      "patterns": ["soil test", "soil health card", "mitti janch", "soil testing lab", "npk test"],
+      "responses": [
+        "Get your soil tested every 2 years. It tells you exactly how much Urea/DAP to use.",
+        "Soil Health Card scheme provides a report of your soil's N, P, K, and pH levels.",
+        "Contact your district Krishi Vigyan Kendra (KVK) for testing."
+      ]
+    },
+    {
+      "tag": "fertilizer",
+      "patterns": ["urea", "dap", "npk", "fertilizer price", "organic fertilizer", "nano urea", "neem coated urea", "potash"],
+      "responses": [
+        "DAP contains 18% Nitrogen and 46% Phosphorus. Use it at sowing time.",
+        "Nano Urea (Liquid) is a new efficient alternative. 1 bottle = 1 bag of Urea.",
+        "Don't overuse Urea; it makes plants susceptible to pests. Balance it with Potash."
+      ]
+    },
+    {
+      "tag": "pesticide",
+      "patterns": ["pesticide", "insecticide", "fungicide", "weedicide", "kill insects", "medicine for crop", "poison"],
+      "responses": [
+        "Always wear a mask while spraying pesticides.",
+        "For weeds: Glyphosate (non-crop area) or Pendimethalin (pre-emergence).",
+        "For caterpillars: Emamectin Benzoate or Coragen are effective."
+      ]
+    },
+    {
+      "tag": "organic",
+      "patterns": ["organic farming", "jaivik kheti", "vermicompost", "earthworm", "cow dung", "panchagavya", "natural farming"],
+      "responses": [
+        "Organic farming reduces costs and improves soil health long-term.",
+        "Vermicompost (Kechua Khaad) is 'Black Gold' for soil.",
+        "Jeevamrut (Cow dung + urine + jaggery) is an excellent natural growth booster."
+      ]
+    },
+    {
+      "tag": "dairy",
+      "patterns": ["dairy", "cow", "buffalo", "milk", "milk price", "amul", "lumpy virus", "foot and mouth disease"],
+      "responses": [
+        "Dairy farming is a great side income. Murrah Buffalo and Jersey/HF Cows are high yielders.",
+        "Vaccinate animals against FMD (Foot & Mouth) and Lumpy Skin Disease.",
+        "Green fodder (Barseem, Napier grass) increases milk production."
+      ]
+    },
+    {
+      "tag": "market_prices",
+      "patterns": ["mandi", "rate today", "price today", "bhav", "market yard", "apmc", "sell crop"],
+      "responses": [
+        "Mandi prices change daily. Check the 'Live Mandi' section in this app.",
+        "e-NAM (National Agriculture Market) allows you to sell crops online to buyers across India.",
+        "Always clean and grade your crop before taking it to Mandi for better rates."
+      ]
+    },
+    {
+      "tag": "fruits",
+      "patterns": ["mango", "banana", "apple", "papaya", "pomegranate", "guava", "fruit farming", "horticulture"],
+      "responses": [
+        "Mango: King of fruits. Watch out for Hopper pests during flowering.",
+        "Banana: Tissue culture planting gives uniform yield. Heavy water feeder.",
+        "Papaya: High profit in short time (9 months), but very sensitive to viruses."
+      ]
+    },
+    {
+      "tag": "subsidy",
+      "patterns": ["subsidy", "govt scheme", "solar pump", "kusum yojana", "drip irrigation subsidy", "polyhouse subsidy"],
+      "responses": [
+        "PM Kusum Yojana gives 60-90% subsidy for Solar Water Pumps.",
+        "Drip Irrigation subsidy is available under PMKSY (Per Drop More Crop).",
+        "Contact your local Agriculture Officer (ADO) for application forms."
+      ]
+    }
+  ]
+}
