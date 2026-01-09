@@ -31,13 +31,21 @@ def get_navbar(user=None, back_link=None):
         left_side = f'<div class="logo"><i class="fas fa-leaf"></i> KrishiMitra</div>'
         right_side = f'<a href="{back_link}" style="color:#555; font-weight:600;"><i class="fas fa-arrow-left"></i> Back</a>'
     elif user:
-        # Added Profile Link here
+        # Added Profile Link AND Labour Hub Link here
         admin_link = '<a href="/admin" style="margin-right:15px; color:#dc3545; font-weight:bold;">Admin Panel</a>' if user == 'admin' else ''
+        
         left_side = f'<div class="logo"><i class="fas fa-leaf"></i> KrishiMitra</div>'
+        
+        # --- ADDED LABOUR HUB LINK BELOW ---
         right_side = f"""
             <div style="display:flex; align-items:center;">
                 {admin_link}
-                <a href="/profile" style="margin-right:15px; color:#198754; font-weight:600;"><i class="fas fa-user-circle"></i> My Profile</a>
+                <a href="/labour_hub" style="margin-right:15px; color:#198754; font-weight:600;">
+                    <i class="fas fa-hard-hat"></i> Labour Hub
+                </a>
+                <a href="/profile" style="margin-right:15px; color:#198754; font-weight:600;">
+                    <i class="fas fa-user-circle"></i> My Profile
+                </a>
                 <a href="/logout" class="btn-nav" style="background:#dc3545; padding: 8px 20px;">Logout</a>
             </div>
         """

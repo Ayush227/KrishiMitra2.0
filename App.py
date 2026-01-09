@@ -12,7 +12,7 @@ from PIL import Image
 import io
 
 # --- IMPORT VIEWS ---
-from views import auth_view, community_view, dashboard_view, landing_view, market_view, chat_view, tool_view, calendar_view, guide_view, admin_view, profile_view, equipment_view
+from views import auth_view, community_view, dashboard_view, landing_view, market_view, chat_view, tool_view, calendar_view, guide_view, admin_view, profile_view, equipment_view, labour_view
 
 app = Flask(__name__)
 app.secret_key = 'krishimitra_secure_key'
@@ -34,26 +34,52 @@ def init_db():
     conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()
     
-    # --- UPDATED USERS TABLE (New: City, Role) ---
+    # --- USERS ---
     c.execute('''CREATE TABLE IF NOT EXISTS users 
-                 (id INTEGER PRIMARY KEY, 
-                  username TEXT UNIQUE, 
-                  email TEXT, 
-                  password_hash TEXT, 
-                  bio TEXT, 
-                  profile_pic TEXT,
-                  full_name TEXT,
-                  mobile TEXT,
-                  village TEXT,
-                  city TEXT,
-                  state TEXT,
-                  pincode TEXT,
-                  role TEXT)''')
+                 (id INTEGER PRIMARY KEY, username TEXT UNIQUE, email TEXT, password_hash TEXT, 
+                  bio TEXT, profile_pic TEXT, full_name TEXT, mobile TEXT, village TEXT, 
+                  city TEXT, state TEXT, pincode TEXT, role TEXT)''')
                   
     c.execute('''CREATE TABLE IF NOT EXISTS posts (id INTEGER PRIMARY KEY, username TEXT, content TEXT, timestamp TEXT)''')
     c.execute('''CREATE TABLE IF NOT EXISTS todos (id INTEGER PRIMARY KEY, username TEXT, date TEXT, task TEXT, completed INTEGER)''')
-    c.execute('''CREATE TABLE IF NOT EXISTS tools (id INTEGER PRIMARY KEY, username TEXT, tool_name TEXT, desc TEXT, rent_price TEXT, sell_price TEXT, mobile TEXT, address TEXT, image_path TEXT)''')
     
+    # --- TOOLS (Updated with next_available_date) ---
+    c.execute('''CREATE TABLE IF NOT EXISTS tools (
+        id INTEGER PRIMARY KEY, username TEXT, tool_name TEXT, desc TEXT, 
+        rent_price TEXT, sell_price TEXT, mobile TEXT, address TEXT, image_path TEXT, 
+        status TEXT DEFAULT 'Available',
+        next_available_date TEXT
+    )''')
+    
+    # --- TOOL REQUESTS ---
+    c.execute('''CREATE TABLE IF NOT EXISTS tool_requests (
+        id INTEGER PRIMARY KEY, tool_id INTEGER, buyer_username TEXT, req_type TEXT, 
+        duration TEXT, message TEXT, contact TEXT, req_status TEXT DEFAULT 'Pending', 
+        response_msg TEXT, FOREIGN KEY(tool_id) REFERENCES tools(id)
+    )''')
+    
+    # --- LABOUR ---
+    c.execute('''CREATE TABLE IF NOT EXISTS labour_jobs (
+        id INTEGER PRIMARY KEY AUTOINCREMENT, username TEXT, work_role TEXT, wages TEXT, 
+        worker_limit INTEGER, desc TEXT, location TEXT, timestamp TEXT, status TEXT DEFAULT 'Open'
+    )''')
+
+    c.execute('''CREATE TABLE IF NOT EXISTS labour_applicants (
+        id INTEGER PRIMARY KEY AUTOINCREMENT, job_id INTEGER, applicant_username TEXT, 
+        fullname TEXT, work_role TEXT, mobile TEXT, address TEXT, photo_path TEXT, timestamp TEXT,
+        FOREIGN KEY(job_id) REFERENCES labour_jobs(id)
+    )''')
+    
+    # --- MIGRATIONS (Auto-fix existing DBs) ---
+    try: c.execute("ALTER TABLE tools ADD COLUMN status TEXT DEFAULT 'Available'")
+    except sqlite3.OperationalError: pass
+    try: c.execute("ALTER TABLE tools ADD COLUMN next_available_date TEXT")
+    except sqlite3.OperationalError: pass
+    try: c.execute("ALTER TABLE tool_requests ADD COLUMN req_status TEXT DEFAULT 'Pending'")
+    except sqlite3.OperationalError: pass
+    try: c.execute("ALTER TABLE tool_requests ADD COLUMN response_msg TEXT")
+    except sqlite3.OperationalError: pass
+
     # Admin
     c.execute("SELECT * FROM users WHERE username = 'admin'")
     if not c.fetchone():
@@ -98,7 +124,6 @@ def signup():
     try:
         conn = sqlite3.connect(DB_PATH)
         c = conn.cursor()
-        # Default role is Farmer
         c.execute("INSERT INTO users (username, email, password_hash, bio, profile_pic, role) VALUES (?, ?, ?, ?, ?, ?)", 
                   (username, email, hashed, "", "", "Farmer"))
         conn.commit()
@@ -112,13 +137,11 @@ def logout():
     session.pop('username', None)
     return redirect(url_for('home'))
 
-# --- UPDATED PROFILE ROUTES ---
 @app.route('/profile')
 def my_profile():
     if 'username' not in session: return redirect(url_for('home'))
     conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()
-    # Fetch ALL fields including city and role (indices 9 and 12)
     c.execute("SELECT id, username, email, bio, profile_pic, full_name, mobile, village, city, state, pincode, role FROM users WHERE username=?", (session['username'],))
     user_data = c.fetchone()
     conn.close()
@@ -153,11 +176,9 @@ def get_user_profile(username):
 @app.route('/update_profile', methods=['POST'])
 def update_profile():
     if 'username' not in session: return redirect(url_for('home'))
-    
-    # Get form data
     full_name = request.form.get('full_name', '')
     mobile = request.form.get('mobile', '')
-    email = request.form.get('email', '') # Optional
+    email = request.form.get('email', '') 
     village = request.form.get('village', '')
     city = request.form.get('city', '')
     state = request.form.get('state', '')
@@ -168,17 +189,12 @@ def update_profile():
 
     conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()
-    
-    c.execute('''UPDATE users SET 
-                 full_name=?, mobile=?, email=?, village=?, city=?, state=?, pincode=?, bio=?, role=?, profile_pic=? 
-                 WHERE username=?''', 
+    c.execute('''UPDATE users SET full_name=?, mobile=?, email=?, village=?, city=?, state=?, pincode=?, bio=?, role=?, profile_pic=? WHERE username=?''', 
               (full_name, mobile, email, village, city, state, pincode, bio, role, pic, session['username']))
-    
     conn.commit()
     conn.close()
     return redirect(url_for('my_profile'))
 
-# --- ADMIN ROUTES ---
 @app.route('/admin')
 def admin_panel():
     if session.get('username') != 'admin': return redirect(url_for('home'))
@@ -201,7 +217,6 @@ def delete_user(user_id):
     conn.close()
     return redirect(url_for('admin_panel'))
 
-# --- MODULES ---
 @app.route('/market')
 def market():
     if 'username' not in session: return redirect(url_for('home'))
@@ -225,15 +240,38 @@ def community():
     conn.close()
     return community_view.render_community(posts, session['username'])
 
+# --- EQUIPMENT HUB ROUTES ---
+
 @app.route('/tools_market')
 def tools_market():
     if 'username' not in session: return redirect(url_for('home'))
     conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()
+    
+    # 1. Fetch Tools
     c.execute("SELECT * FROM tools ORDER BY id DESC")
     tools = c.fetchall()
+
+    # 2. Fetch Requests
+    c.execute("SELECT id, tool_id, buyer_username, req_type, duration, message, contact, req_status FROM tool_requests")
+    all_requests = c.fetchall()
+
+    # 3. Check Users Applications
+    c.execute("SELECT tool_id, req_status, response_msg FROM tool_requests WHERE buyer_username=?", (session['username'],))
+    my_applications = {row[0]: {'status': row[1], 'msg': row[2]} for row in c.fetchall()}
+
     conn.close()
-    return equipment_view.render_tools(tools, session['username'])
+
+    requests_data = {}
+    for r in all_requests:
+        tid = r[1]
+        if tid not in requests_data: requests_data[tid] = []
+        requests_data[tid].append({
+            'id': r[0], 'buyer': r[2], 'type': r[3], 'dur': r[4], 
+            'msg': r[5], 'contact': r[6], 'status': r[7]
+        })
+
+    return equipment_view.render_tools(tools, session['username'], requests_data, my_applications)
 
 @app.route('/add_tool', methods=['POST'])
 def add_tool():
@@ -254,17 +292,199 @@ def add_tool():
             image_filename = filename
     conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()
-    c.execute("INSERT INTO tools (username, tool_name, desc, rent_price, sell_price, mobile, address, image_path) VALUES (?, ?, ?, ?, ?, ?, ?, ?)", 
+    c.execute("INSERT INTO tools (username, tool_name, desc, rent_price, sell_price, mobile, address, image_path, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'Available')", 
               (session['username'], name, desc, rent, sell, mobile, address, image_filename))
     conn.commit()
     conn.close()
     return redirect(url_for('tools_market'))
 
-# --- CHATBOT & AI ---
-def load_brain():
-    try: return json.load(open(JSON_PATH, 'r', encoding='utf-8'))
-    except: return {"intents": []}
-chatbot_data = load_brain()
+@app.route('/submit_tool_interest', methods=['POST'])
+def submit_tool_interest():
+    if 'username' not in session: return redirect(url_for('home'))
+    tool_id = request.form['tool_id']
+    req_type = request.form['req_type']
+    duration = request.form['duration']
+    message = request.form['message']
+    contact = request.form['contact']
+    
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+    
+    # --- LOGIC: Check Duplicate Request ---
+    c.execute("SELECT id FROM tool_requests WHERE tool_id=? AND buyer_username=? AND req_status='Pending'", 
+              (tool_id, session['username']))
+    existing = c.fetchone()
+    
+    if existing:
+        conn.close()
+        # You could add a flash message here, but for now we redirect back
+        return redirect(url_for('tools_market'))
+
+    c.execute("INSERT INTO tool_requests (tool_id, buyer_username, req_type, duration, message, contact, req_status) VALUES (?, ?, ?, ?, ?, ?, 'Pending')",
+              (tool_id, session['username'], req_type, duration, message, contact))
+    conn.commit()
+    conn.close()
+    return redirect(url_for('tools_market'))
+
+@app.route('/set_tool_status', methods=['POST'])
+def set_tool_status():
+    if 'username' not in session: return redirect(url_for('home'))
+    tool_id = request.form['tool_id']
+    new_status = request.form['status'] # 'Available' or 'Rented'
+    available_date = request.form.get('next_date', '') # Only if Rented
+
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+    
+    # Verify Owner
+    c.execute("SELECT username FROM tools WHERE id=?", (tool_id,))
+    tool = c.fetchone()
+    if tool and tool[0] == session['username']:
+        if new_status == 'Available':
+            available_date = '' # Clear date if available
+            
+        c.execute("UPDATE tools SET status=?, next_available_date=? WHERE id=?", 
+                  (new_status, available_date, tool_id))
+        conn.commit()
+    
+    conn.close()
+    return redirect(url_for('tools_market'))
+
+@app.route('/withdraw_interest/<int:tool_id>')
+def withdraw_interest(tool_id):
+    if 'username' not in session: return redirect(url_for('home'))
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+    c.execute("DELETE FROM tool_requests WHERE tool_id=? AND buyer_username=?", (tool_id, session['username']))
+    conn.commit()
+    conn.close()
+    return redirect(url_for('tools_market'))
+
+@app.route('/manage_request', methods=['POST'])
+def manage_request():
+    if 'username' not in session: return redirect(url_for('home'))
+    action = request.form['action'] # 'fulfill' or 'reject'
+    req_id = request.form['req_id']
+    
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+
+    if action == 'fulfill':
+        c.execute("UPDATE tool_requests SET req_status='Fulfilled' WHERE id=?", (req_id,))
+        # Do NOT automatically mark tool as Rented here, let owner do it manually with date
+        
+    elif action == 'reject':
+        reason = request.form.get('reason', 'No reason provided.')
+        c.execute("UPDATE tool_requests SET req_status='Rejected', response_msg=? WHERE id=?", (reason, req_id))
+
+    conn.commit()
+    conn.close()
+    return redirect(url_for('tools_market'))
+
+@app.route('/delete_tool/<int:tool_id>')
+def delete_tool(tool_id):
+    if 'username' not in session: return redirect(url_for('home'))
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+    c.execute("SELECT username FROM tools WHERE id=?", (tool_id,))
+    tool = c.fetchone()
+    if tool and tool[0] == session['username']:
+        c.execute("DELETE FROM tools WHERE id=?", (tool_id,))
+        c.execute("DELETE FROM tool_requests WHERE tool_id=?", (tool_id,))
+        conn.commit()
+    conn.close()
+    return redirect(url_for('tools_market'))
+
+# --- LABOUR ROUTES ---
+@app.route('/labour_hub')
+def labour_hub():
+    if 'username' not in session: return redirect(url_for('home'))
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+    c.execute('''SELECT j.id, j.username, j.work_role, j.wages, j.worker_limit, j.desc, j.location, j.timestamp,
+        (SELECT COUNT(*) FROM labour_applicants WHERE job_id = j.id) as current_count
+        FROM labour_jobs j ORDER BY j.id DESC''')
+    jobs = c.fetchall()
+    conn.close()
+    return labour_view.render_labour_hub(jobs, session['username'])
+
+@app.route('/post_job', methods=['POST'])
+def post_job():
+    if 'username' not in session: return redirect(url_for('home'))
+    work_role = request.form['work_role']
+    wages = request.form['wages']
+    worker_limit = request.form['worker_limit']
+    desc = request.form['desc']
+    location = request.form['location']
+    timestamp = datetime.now().strftime("%d %b %Y")
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+    c.execute("INSERT INTO labour_jobs (username, work_role, wages, worker_limit, desc, location, timestamp) VALUES (?, ?, ?, ?, ?, ?, ?)",
+              (session['username'], work_role, wages, worker_limit, desc, location, timestamp))
+    conn.commit()
+    conn.close()
+    return redirect(url_for('labour_hub'))
+
+@app.route('/apply_job/<int:job_id>', methods=['GET', 'POST'])
+def apply_job(job_id):
+    if 'username' not in session: return redirect(url_for('home'))
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+    c.execute("SELECT worker_limit, username, work_role FROM labour_jobs WHERE id=?", (job_id,))
+    job = c.fetchone()
+    if not job: conn.close(); return "Job not found"
+    limit = job[0]; job_role = job[2]
+    c.execute("SELECT id FROM labour_applicants WHERE job_id=? AND applicant_username=?", (job_id, session['username']))
+    existing_app = c.fetchone()
+    if existing_app: conn.close(); return redirect(url_for('labour_hub'))
+    c.execute("SELECT COUNT(*) FROM labour_applicants WHERE job_id=?", (job_id,))
+    count = c.fetchone()[0]
+    if count >= limit: conn.close(); return "Job is full"
+    if request.method == 'GET':
+        conn.close()
+        return labour_view.render_application_form(job_id, job_role)
+    if request.method == 'POST':
+        name = request.form['fullname']; role = request.form['work_role']; mobile = request.form['mobile']; address = request.form['address']
+        timestamp = datetime.now().strftime("%d %b %Y")
+        image_filename = "default_user.png"
+        if 'photo' in request.files:
+            file = request.files['photo']
+            if file.filename != '':
+                filename = secure_filename(file.filename); filename = f"worker_{int(datetime.now().timestamp())}_{filename}"
+                file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename)); image_filename = filename
+        c.execute('''INSERT INTO labour_applicants (job_id, applicant_username, fullname, work_role, mobile, address, photo_path, timestamp) VALUES (?, ?, ?, ?, ?, ?, ?, ?)''',
+                  (job_id, session['username'], name, role, mobile, address, image_filename, timestamp))
+        conn.commit(); conn.close()
+        return redirect(url_for('labour_hub'))
+
+@app.route('/job_details/<int:job_id>')
+def job_details(job_id):
+    if 'username' not in session: return redirect(url_for('home'))
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+    c.execute("SELECT username FROM labour_jobs WHERE id=?", (job_id,))
+    job = c.fetchone()
+    if not job or job[0] != session['username']: conn.close(); return redirect(url_for('labour_hub'))
+    c.execute('''SELECT id, fullname, work_role, mobile, address, photo_path, timestamp, applicant_username FROM labour_applicants WHERE job_id = ?''', (job_id,))
+    applicants = c.fetchall(); conn.close()
+    return labour_view.render_job_details(job_id, applicants)
+
+@app.route('/remove_applicant/<int:app_id>')
+def remove_applicant(app_id):
+    if 'username' not in session: return redirect(url_for('home'))
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+    c.execute("SELECT job_id FROM labour_applicants WHERE id=?", (app_id,))
+    app_data = c.fetchone()
+    if app_data:
+        job_id = app_data[0]
+        c.execute("SELECT username FROM labour_jobs WHERE id=?", (job_id,))
+        job_owner = c.fetchone()
+        if job_owner and job_owner[0] == session['username']:
+            c.execute("DELETE FROM labour_applicants WHERE id=?", (app_id,))
+            conn.commit(); conn.close()
+            return redirect(url_for('job_details', job_id=job_id))
+    conn.close(); return redirect(url_for('labour_hub'))
 
 @app.route('/chat')
 def chat(): return chat_view.render_chat()
@@ -272,31 +492,16 @@ def chat(): return chat_view.render_chat()
 @app.route('/chat_api', methods=['POST'])
 def chat_api():
     msg = request.json.get('message', '').lower()
-    reply = "I didn't understand that. Try asking about 'Tractors', 'Wheat', or 'Rice'."
-    
-    all_patterns = []
-    pattern_map = {} 
-    
-    if not chatbot_data.get('intents'):
-        return jsonify({"reply": "Error: Brain missing!"})
-
+    chatbot_data = load_brain()
+    reply = "I didn't understand that."
     for intent in chatbot_data.get('intents', []):
         for pattern in intent['patterns']:
-            all_patterns.append(pattern)
-            pattern_map[pattern] = intent
-            
-    # --- ADD THIS LINE HERE (CRITICAL FIX) ---
-    # This sorts patterns so "tractor price" (long) is checked BEFORE "price" (short)
-    all_patterns.sort(key=len, reverse=True) 
-    # ---------------------------------------
-
-    found_intent = None
-    for pattern in all_patterns:
-        if pattern in msg:
-            found_intent = pattern_map[pattern]
-            break
-    if found_intent: reply = random.choice(found_intent['responses'])
+            if pattern in msg: return jsonify({"reply": random.choice(intent['responses'])})
     return jsonify({"reply": reply})
+
+def load_brain():
+    try: return json.load(open(JSON_PATH, 'r', encoding='utf-8'))
+    except: return {"intents": []}
 
 @app.route('/tool', methods=['GET', 'POST'])
 def tool():
@@ -307,18 +512,10 @@ def tool():
             try:
                 file = request.files['file']
                 image = Image.open(io.BytesIO(file.read()))
-                prompt = """Analyze leaf. Identify disease. Headers: DIAGNOSIS, CONFIDENCE, SEVERITY, REMEDY."""
+                prompt = "Analyze leaf. Identify disease."
                 response = model.generate_content([prompt, image])
-                text = response.text
-                diagnosis="Unknown"; confidence="0%"; severity="Unknown"; remedy="Consult expert."
-                for line in text.split('\n'):
-                    if "DIAGNOSIS:" in line: diagnosis = line.split(':')[1].strip()
-                    if "CONFIDENCE:" in line: confidence = line.split(':')[1].strip()
-                    if "SEVERITY:" in line: severity = line.split(':')[1].strip()
-                    if "REMEDY:" in line: remedy = line.split(':')[1].strip()
-                result = {"disease": diagnosis, "accuracy": confidence, "remedy": remedy, "severity": severity, "image_name": file.filename}
-            except Exception as e:
-                result = {"disease": "Error", "accuracy": "0%", "remedy": "Check Key", "severity": "Error", "image_name": "Error"}
+                result = {"disease": response.text, "image_name": file.filename}
+            except: result = {"disease": "Error", "image_name": "Error"}
     return tool_view.render_tool(result)
 
 @app.route('/calendar')
@@ -336,8 +533,7 @@ def add_task():
     conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()
     c.execute("INSERT INTO todos (username, date, task, completed) VALUES (?, ?, ?, 0)", (session['username'], request.form['date'], request.form['task']))
-    conn.commit()
-    conn.close()
+    conn.commit(); conn.close()
     return redirect(url_for('calendar'))
 
 @app.route('/delete_task/<int:task_id>')
@@ -345,8 +541,7 @@ def delete_task(task_id):
     conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()
     c.execute("DELETE FROM todos WHERE id=?", (task_id,))
-    conn.commit()
-    conn.close()
+    conn.commit(); conn.close()
     return redirect(url_for('calendar'))
 
 @app.route('/auto_schedule', methods=['POST'])
@@ -354,16 +549,12 @@ def auto_schedule():
     crop_name = request.form['crop_name']
     start_date = datetime.strptime(request.form['start_date'], "%Y-%m-%d")
     schedules = []
-    if crop_name == "Wheat": schedules = [(0, "🚜 Sow Wheat"), (21, "💧 1st Irrigation"), (45, "🧪 Apply Urea"), (65, "💧 2nd Irrigation"), (120, "🌾 Harvest")]
-    elif crop_name == "Rice": schedules = [(0, "🌱 Sow Paddy"), (25, "🚜 Transplant"), (30, "💧 Maintain Water"), (60, "🧪 Apply Potash"), (110, "🌾 Harvest")]
-    elif crop_name == "Cotton": schedules = [(0, "🌱 Sow Cotton"), (30, "✂️ Thinning"), (45, "💧 1st Irrigation"), (90, "🐛 Check Bollworm"), (150, "☁️ Picking")]
-    elif crop_name == "Tomato": schedules = [(0, "🌱 Transplant"), (20, "🥢 Staking"), (45, "💧 Irrigation"), (60, "🍅 Harvest")]
+    if crop_name == "Wheat": schedules = [(0, "🚜 Sow Wheat"), (120, "🌾 Harvest")]
     conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()
     for days, task in schedules:
         c.execute("INSERT INTO todos (username, date, task, completed) VALUES (?, ?, ?, 0)", (session['username'], (start_date + timedelta(days=days)).strftime("%Y-%m-%d"), task))
-    conn.commit()
-    conn.close()
+    conn.commit(); conn.close()
     return redirect(url_for('calendar'))
 
 @app.route('/guide')

@@ -272,6 +272,16 @@ def render_dashboard(user):
                 </div>
             </a>
 
+           
+            <a href="/tools_market" class="flip-card">
+                <div class="card" onclick="window.location.href='/labour_hub'">
+                     <div class="icon-container" style="background: linear-gradient(135deg, #d97706, #b45309);">
+                    <i class="fas fa-hard-hat"></i>
+                     </div>
+                    <h3>Labour Hub</h3>
+                    <p>Hire workers or find daily wage jobs.</p>
+                </div>
+            </a>        
         </div>
     </div>
     """
